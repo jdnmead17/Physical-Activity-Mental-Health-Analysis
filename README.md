@@ -35,4 +35,4 @@ Clone this repository, open the .Qmd (for full report) or .R (for raw script) fi
 code.
 
 ## Link to Report
-[View Full Report (HTML)](effect_of_physical_activity_frequency_on_mental_health.pdf)
+[View Full Report (PDF)](effect_of_physical_activity_frequency_on_mental_health.pdf)
