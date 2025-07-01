@@ -30,6 +30,9 @@ lowest physical activty groups.
     - Post-hoc analysis (standardized residuals)
     - Critical thinking (discussion of limitations and suggestions for further study; comparison with existing literature)
 
-## How to run
+## How to Run
 Clone this repository, open the .Qmd (for full report) or .R (for raw script) file in Posit Cloud or RStudio, and run the 
 code.
+
+## Link to Report
+[View Full Report (HTML)](effect_of_physical_activity_frequency_on_mental_health.html)
