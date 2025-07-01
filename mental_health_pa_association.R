@@ -33,9 +33,8 @@ knitr::kable(round(prop.table(my_table, 2), 2),
 
 #Barplot
 library(ggplot2)
-install.packages('ggthemes')
 library(ggthemes)
-prop_df <- as.data.frame(prop.table(mytable, 1)) %>%
+prop_df <- as.data.frame(prop.table(my_table, 1)) %>%
   rename(phys_activity = Var1,
          ment_hlth_bad = Var2,
          proportion = Freq)
