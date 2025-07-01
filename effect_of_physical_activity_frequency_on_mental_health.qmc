@@ -1,0 +1,128 @@
+---
+title: "Effect of Physical Activity Frequency on Self-Reported Mental "
+author: "Justin Mead"Health
+editor: visual
+---
+
+## Background/Motivation for the Study
+
+## Research Question and Hypothesis
+
+Major depression (MD) is a debilitating mental illness affecting approximately 8.3% of U.S. adults and 20.1% of U.S. adolescents (National Institute of Mental Health, 2023), and the prevalence seems to be increasing over time (Xu et al., 2024). Similarly, clinical anxiety occurs in roughly 15.6% of U.S. adults at any given time (Terlizzi and Villarroel, 2010). Although effective treatments exist, development of actionable preventative measures has the potential to improve our quality of life by reducing the frequency of mental health disturbances within the population. Physical activity is a free of cost, and thought to be highly effective in improving essentially all components of well-being. In turn, I set out to investigate the relationship between the frequencies mental health disturbances and physical activity. Is the frequency with which individuals engage in moderate-to-vigorous physical activity associated with the occurence of mental health disturbance? I expect these variables are connected. Specifically, I think that the chance of having mental health problems decreases as the frequency of physical activity increases.
+
+## Data Description and Exploratory Data Analysis
+
+I used data from R Studio's NHANEs dataset, as decribed by Pruim, 2022. This dataset contains 10,000 observations of 76 variables and is based on a survey conducted by the U.S. National Center for Health Statistics. The target population is American civilians who are not institutionalized. For this analysis, I do not segregate respondents by gender, race, socioeconomic status, or other demographic. While this lack of specificity increases the number of potential confounding and mediators, the results may be fairly generalized to the typical American. Also, it should be considered only preliminary–further studies will be required to further elucidate components of the relationship between physical activity and mental health.
+
+From the NHANES data set, I extracted "PhysActiveDays" and "DaysMentHlthBad". The former refers to the self-reported number of days per week on which respondents engage in moderate to vigorous physical activity. The latter includes the number of days that respondents reported having mental health that was "not good" (poor)in the last month.
+
+```         
+```
+
+```{r}
+library(NHANES)
+NHANES <- NHANES
+```
+
+I filtered the dataset to include only the variables of interest (PhysActiveDays and DaysMentHlthBad). Additionally, I removed all non-responses (NAs) and replaced the variables of interest with categorical variables called "menthlthbadct" and "physctivity" to conduct a chi-square analysis. This is because my variables of interest are ill-suited to most standard statistical analyses using numeric variables. PhyActiveDays and DaysMentHlthBad are numerical but discrete. Additionally, PhysActiveDays has a limited number of response options–1 though 7 days per week. The scatter-plot below illustrates why linear regression–the most common form of analysis for two numeric variables–is inappropriate in this context.
+
+```{r}
+plot(NHANES$DaysMentHlthBad~NHANES$PhysActiveDays, 
+     xlab = "Days per Week Physically Active", 
+     ylab = "Days Mental Health 'Not Good' (in last month)",
+     main = "Scatterplot of Mental Health as a
+     Function of Physical Activity")
+```
+
+Instead of analyzing physical activity and mental health as numerical variables, I converted PhysActiveDays and DaysMentHlthBad to categorical variables to prepare them for chi-square analysis. I assumed there were minimal differences in groups that engage in a similar weekly frequency of physical activity. In turn, I grouped 1 or 2, 3 or 4, and 5 to 7 days into the categories "low", "moderate", and "high", respectively. On the other hand, the variable for mental health is characterized by a greater number of response options, but roughly 50% of the responses were 0. In turn, it was suitable to treat this as a binary variable–"no" for 0 bad mental health days and "yes" for 1 or more. Thus, I replaced PhysActiveDays with a variable called "phys_activity" and DaysMentHlthBad with "ment_hlth_bad".
+
+```{r}
+library(dplyr)
+nhanes <- NHANES %>% filter(!is.na(PhysActiveDays)) %>%
+  filter(!is.na(DaysMentHlthBad)) %>%
+  mutate(phys_activity = case_when(
+      PhysActiveDays >= 1 & PhysActiveDays <= 2 ~ "Low",
+      PhysActiveDays >= 3 & PhysActiveDays <= 4 ~ "Moderate",
+      PhysActiveDays > 4 ~ "High"),
+    ment_hlth_bad = case_when(
+      DaysMentHlthBad == 0 ~ "No",
+      DaysMentHlthBad > 0 ~ "Yes")) %>%
+  select(ment_hlth_bad, phys_activity)
+```
+
+The resulting subset includes a sample of 3,986 individuals. Among those who reported having bad mental health days in the past month, 519 (30%) reported low physical activity, 645 (37%) reported moderate physical activity, and 558 (32%) reported high physical activity. Among those who reported having no poor mental health days in the past month, 569 (26%) reported low physical activity, 777 (36%) reported moderate physical activity, and 828 (38%) reported high physical activity.
+
+```{r}
+nhanes <- nhanes %>% mutate(ment_hlth_bad = factor(ment_hlth_bad,
+                              levels = c("Yes", "No")),
+                            phys_activity = factor(phys_activity, 
+                              levels = c("Low", "Moderate", "High")))
+my_table <- table(nhanes$phys_activity, nhanes$ment_hlth_bad)
+knitr::kable(round(prop.table(my_table, 2), 2), 
+      caption = "Proportions of Physical Activity Frequency(Low, Moderate, High) 
+                 vs. Occurence 'Bad' Mental Health Days (Yes/No)")
+```
+
+At most, there appears to be a small relationship between self-reported physical activity and frequency of bad mental health days. Within the no poor mental health group, there are noticeably more respondents reporting moderate to high physical activity than low. Among those who reported poor mental health days, the largest proportion reported engaging in moderate frequency physical activity, with similar proportions falling in the high and low physical activity groups. A larger proportion of those in the no poor mental health group reported high physical activity and a smaller proportion reported low physical activity than those in the "Yes" group. This suggests that higher frequency physical activity may be modestly protective against mental health disturbances.
+
+```{r}
+library(ggplot2)
+library(ggthemes)
+prop_df <- as.data.frame(prop.table(mytable, 1)) %>%
+  rename(phys_activity = Var1,
+         ment_hlth_bad = Var2,
+         proportion = Freq)
+ggplot(prop_df, aes(phys_activity, proportion, fill = ment_hlth_bad)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Mental Health vs. Physical Activity", 
+       x = "Physical Activity Level", 
+       y = "Percentage",
+       fill = "Reported days with poor mental health?") + 
+  geom_text(aes(label =  scales::percent(proportion)),
+            position = position_stack(vjust = 0.5)) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_tufte() + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")
+```
+
+## Analysis
+
+I selected a chi-square test to determine whether there is an association between two categorical variables–physical activity and bad mental health days. In the NHANES, physical activity is defined as the number of days in which an individual engages in moderate to vigorous physical activity. Similarly, bad mental health is measured as days in the month preceding the questionnaire. Both are therefore numerical yet discrete variables, rendering them unsuitable to most statistical tests for numerical data, such as standard linear regression. Due to the highly limited number of response options for physical activity, treating it as an ordinal data set seemed ideal for statistical analysis. Additionally, the data meet the assumptions of the chi-square test. Each group has a count greater than 5, our sample size is less than 10% of the population of interest, and the sample was randomly selected.
+
+A chi-square test revealed a statistically significant association between physical activity and bad mental health days (χ2 =14.91, df = 2, p = 0.0006). Thus, we reject the null hypothesis that the frequency of physical activity is unrelated to the occurrence of poor mental health days. Post-hoc analysis using the standardized residuals revealed that a greater than expected proportion of individuals in the low physical activity group reported bad mental health days in the past month. Meanwhile, a lower than expected proportion of individuals in the high physical activity group reported having poor mental health. The standardized residuals for these groups were 2.74 and -3.68, respectively. Meanwhile, with a standardized residual of 1.10, there is no significant deviation from the expected proportion of individuals reporting poor mental health days among those who engage in moderate physical activity.
+
+```{r}
+(my_chi <- chisq.test(my_table))
+knitr::kable(round(my_chi$stdres, 2), 
+                   caption =  "Standard Residuals from Chi-Square Test of 
+                   Physical Activity (Low, Moderate, High) vs. 
+                   Mental Health (Yes/No)")
+```
+
+## Conclusions
+
+In conclusion, mental health appears to be associated with physical activity. Specifically, the weekly frequency with which one engages in moderate-to-vigorous physical activity is inversely associated with the likelihood that one will experience what they consider to be poor mental health. Analysis of the NHANES data-set reveals that those who report high frequency physical activity (5+ days per week) are less likely to have one or more poor mental health days in a given month than would be expected if there was no association between these two variables. Conversely, those whom engage in low frequency physical activity (1 or 2 days per week) are more likely to experience poor mental health at least one day per month than would otherwise be expected. Therefore, engaging in moderate-to-vigorous physical 5 or more days per week may be protective against poor mental health, whereas engaging in 2 or fewer days increases the likelihood of experiencing poor mental health during a given month. This is in keeping with my hypothesis.
+
+This study has several limitations. First, we do not know the duration of exercise bouts respondents engaged in. Also, the terms "moderate" and "vigorous" were open to interpretation, nor is it clear what variety of exercise respondents performed). In turn, we could have individuals who engage in 10 minutes of strength training per day in the high physical activity group and others who jog twice per week for 2 hours at a time in the low physical activity group. In essence, this study does not provide us with enough details to recommend a specific protocol. At the most, we can say that more physical activity is probably better for safeguarding one's mental health than less. Perhaps, if one has the choice to engage in six 30-minute sessions or three hour-long sessions, the former may result in superior outcomes. However, further studies would be required to make these or other specific recommendations.
+
+The outcome variable–poor mental health days per month–is also highly limited. It does not convey information about specific mental health outcomes. Additionally, the lack of respondents reporting more than one poor mental health day in the last month suggests that we could benefit from oversampling individuals with chronic mental health problems. Coupled with the temporal ambiguity and lack of control associated with cohort studies, this analysis only supports the idea that more frequent exercise is associated with a lower chance of mental health disturbance. Randomized control trials are needed to make specific predictions and demonstrate causality. Although it is likely that physical activity drives mental health outcomes, this study is unable to demonstrate such a relationship. Additionally, a more diverse array of variables would help to more clearly define the specific effects of physical activity on mental health.
+
+Finally, the large number of missing values likely subjects this study to bias. As it is based on questionnaire responses, most observations in the NHANES dataset have missing values for at least one missing variable. It may be informative to use k nearest neighbor imputation or to conduct an independent study to determine if the values are missing at random (MAR), missing completely at random (MCAR), or missing not at random (MNAR).
+
+In order to combat the limitations of the current study and generate data more suitable to linear regression analysis, we would need continuous predictor and outcome variables. One way to achieve this would be to define mental health using an index, such as the SF-36 (Friedman et al., 2005). We could then use three variables to define physical activity–intensity (percentage of max heart rate or VO2-max), volume (duration), and frequency (sessions/week). We could also control for obvious confounding variables, including sex, age, and an external stressors index such as the ESI (Gomez et al., 2016).
+
+For predictive modeling, hypothesis testing methods are not ideal. Future investigations focused on modeling could utilize logistic regression and classification trees to make predictions based on the NHANES dataset. Stepwise modeling and/or variable importance testing could enable analytical detection of confounders or identification of variables to include for higher-accuracy predictions.
+
+## References
+
+Friedman, B., Heisel, M., & Delavan, R. (2005). Validity of the SF-36 Five-Item Mental Health Index for Major Depression in Functionally Impaired, Community-Dwelling Elderly Patients. *Journal of the American Geriatrics Society, 53*(11), 1978-1985. <https://doi.org/10.1111/j.1532-5415.2005.00469.x>
+
+Gómez, M. L., Ashford, K., Linares, A. M., & Hall, L. A. (2015). A Pilot Test of the Everyday Stressors Index-Spanish Version in a Sample of Hispanic Women Attending Prenatal Care. *Journal of nursing measurement*, *23*(3), 519–531. https://doi.org/10.1891/1061-3749.23.3.519
+
+National Institute of Mental Health. (2023, July). *Depression*. National Institutes of Health. <https://www.nimh.nih.gov/health/statistics/major-depression>
+
+Pruim, R. (2022). *Package 'NHANES'*. <https://cran.r-project.org/web/packages/NHANES/NHANES.pdf>
+
+Villarroel, M. A., & Terlizzi, E. P. (2020). Symptoms of Depression Among Adults: United States, 2019. *NCHS data brief*, (379), 1–8.
+
+Xu, Y., Wu, Z., Xin, S., Gao, Y., Han, Y., Zhao, J., Guo, Y., Dong, Y., Liu, Y., Wang, F., & Li, B. (2024). Temporal trends and age-period-cohort analysis of depression in U.S. adults from 2013 to 2022. *Journal of Affective Disorders, 362*, 237-243. https://doi.org/10.1016/j.jad.2024.06.090
