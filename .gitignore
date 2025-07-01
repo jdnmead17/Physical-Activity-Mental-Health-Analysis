@@ -1,0 +1,16 @@
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+# Posit Cloud specific temporary files
+.Rprofile
+.Renviron
+.Rprofile.d/
+.Renviron.d/
+renv/
+renv.lock
+# Uncomment the lines below if you do NOT want to upload these file types:
+# *.csv
+# *.xlsx
+# *.rds
+# *.rda
