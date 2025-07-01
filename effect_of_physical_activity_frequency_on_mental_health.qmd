@@ -2,6 +2,7 @@
 title: "Effect of Physical Activity Frequency on Self-Reported Mental Health"
 author: "Justin Mead"
 editor: visual
+format: pdf
 ---
 
 ## Background and Research Question
